@@ -1,0 +1,707 @@
+-- NhatPhi Admin Menu v8 - Cyberpunk Glow Edition (RED ESP LINES)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+-- Biến cấu hình
+local speedValue = 50
+local jumpValue = 50
+local flySpeed = 50
+
+local isApplied = false
+local isFlying = false
+local isNoclip = false
+local isESP = false
+local isAimbot = false
+local menuVisible = true
+local isAiming = false
+
+local flyBV, flyBG = nil, nil
+local espHighlights = {}
+local espLines = {}
+local espDots = {}
+
+-- Xóa Gui cũ nếu tồn tại
+if CoreGui:FindFirstChild("NhatPhi_AdminMenu") then
+    CoreGui.NhatPhi_AdminMenu:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NhatPhi_AdminMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Nút mở Menu Tròn (Floating Button)
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Name = "OpenBtn"
+OpenBtn.Parent = ScreenGui
+OpenBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+OpenBtn.Text = "⚡"
+OpenBtn.Font = Enum.Font.FredokaOne
+OpenBtn.TextSize = 22
+OpenBtn.TextColor3 = Color3.fromRGB(0, 255, 200)
+OpenBtn.Draggable = true
+OpenBtn.Active = true
+
+local openCorner = Instance.new("UICorner", OpenBtn)
+openCorner.CornerRadius = UDim.new(1, 0)
+
+local openStroke = Instance.new("UIStroke", OpenBtn)
+openStroke.Color = Color3.fromRGB(0, 255, 200)
+openStroke.Thickness = 2
+openStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 310, 0, 430)
+MainFrame.Position = UDim2.new(0.5, -155, 0.5, -215)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+MainFrame.Visible = true
+
+local mainCorner = Instance.new("UICorner", MainFrame)
+mainCorner.CornerRadius = UDim.new(0, 14)
+
+local mainStroke = Instance.new("UIStroke", MainFrame)
+mainStroke.Thickness = 2
+mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- Gradient Viền
+local UIGradient = Instance.new("UIGradient", mainStroke)
+UIGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 128)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(130, 0, 255))
+})
+
+-- Header
+local Header = Instance.new("Frame")
+Header.Parent = MainFrame
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BackgroundColor3 = Color3.fromRGB(22, 25, 38)
+Header.BorderSizePixel = 0
+
+local Title = Instance.new("TextLabel")
+Title.Parent = Header
+Title.Size = UDim2.new(0.7, 0, 1, 0)
+Title.Position = UDim2.new(0.05, 0, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "⚡ NHATPHI MENU v8"
+Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 16
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local FPS = Instance.new("TextLabel")
+FPS.Parent = Header
+FPS.Size = UDim2.new(0.25, 0, 1, 0)
+FPS.Position = UDim2.new(0.7, 0, 0, 0)
+FPS.BackgroundTransparency = 1
+FPS.Text = "60 FPS"
+FPS.Font = Enum.Font.GothamBold
+FPS.TextSize = 12
+FPS.TextColor3 = Color3.fromRGB(0, 255, 200)
+FPS.TextXAlignment = Enum.TextXAlignment.Right
+
+-- Container chứa danh sách
+local Body = Instance.new("ScrollingFrame")
+Body.Parent = MainFrame
+Body.Position = UDim2.new(0, 0, 0, 48)
+Body.Size = UDim2.new(1, 0, 1, -88)
+Body.BackgroundTransparency = 1
+Body.ScrollBarThickness = 3
+Body.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 200)
+
+local UIListLayout = Instance.new("UIListLayout", Body)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local UIPadding = Instance.new("UIPadding", Body)
+UIPadding.PaddingTop = UDim.new(0, 6)
+
+-- Hàm khởi tạo Toggle
+local function createToggle(order, icon, text, onClick)
+    local btn = Instance.new("TextButton")
+    btn.LayoutOrder = order
+    btn.Parent = Body
+    btn.Size = UDim2.new(0.9, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(24, 28, 42)
+    btn.Text = ""
+    btn.AutoButtonColor = false
+
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0, 8)
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = Color3.fromRGB(40, 45, 65)
+    stroke.Thickness = 1
+
+    local lblText = Instance.new("TextLabel", btn)
+    lblText.Size = UDim2.new(0.7, 0, 1, 0)
+    lblText.Position = UDim2.new(0.04, 0, 0, 0)
+    lblText.BackgroundTransparency = 1
+    lblText.Text = icon .. "  " .. text
+    lblText.Font = Enum.Font.GothamMedium
+    lblText.TextSize = 13
+    lblText.TextColor3 = Color3.fromRGB(200, 200, 210)
+    lblText.TextXAlignment = Enum.TextXAlignment.Left
+
+    local statusDot = Instance.new("Frame", btn)
+    statusDot.Size = UDim2.new(0, 10, 0, 10)
+    statusDot.Position = UDim2.new(0.9, -10, 0.5, -5)
+    statusDot.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+    Instance.new("UICorner", statusDot).CornerRadius = UDim.new(1, 0)
+
+    local state = false
+
+    btn.MouseEnter:Connect(function()
+        if not state then
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(32, 38, 58)}):Play()
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if not state then
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(24, 28, 42)}):Play()
+        end
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        local targetColor = state and Color3.fromRGB(25, 50, 75) or Color3.fromRGB(24, 28, 42)
+        local strokeColor = state and Color3.fromRGB(0, 255, 200) or Color3.fromRGB(40, 45, 65)
+        local dotColor = state and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(80, 80, 100)
+        local textColor = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 210)
+
+        TweenService:Create(btn, TweenInfo.new(0.25), {BackgroundColor3 = targetColor}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.25), {Color = strokeColor}):Play()
+        TweenService:Create(statusDot, TweenInfo.new(0.25), {BackgroundColor3 = dotColor}):Play()
+        TweenService:Create(lblText, TweenInfo.new(0.25), {TextColor3 = textColor}):Play()
+
+        onClick(state)
+    end)
+
+    return btn
+end
+
+-- Khởi tạo các Toggles
+createToggle(1, "🏃", "Tăng Tốc Độ", function(s) isApplied = s end)
+createToggle(2, "✈️", "Chế Độ Bay (Fly)", function(s) isFlying = s end)
+createToggle(3, "🔮", "Xuyên Tường (Noclip)", function(s) isNoclip = s end)
+createToggle(4, "👁️", "Nhìn Xuyên Tường (ESP)", function(s) isESP = s end)
+createToggle(5, "🎯", "Aim Khi Bắn (Aimbot)", function(s) isAimbot = s end)
+
+-- Hàm tạo ô nhập dữ liệu
+local function createInput(order, icon, titleText, defaultValue, onChanged)
+    local container = Instance.new("Frame")
+    container.LayoutOrder = order
+    container.Parent = Body
+    container.Size = UDim2.new(0.9, 0, 0, 32)
+    container.BackgroundTransparency = 1
+
+    local lbl = Instance.new("TextLabel", container)
+    lbl.Size = UDim2.new(0.5, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = icon .. " " .. titleText
+    lbl.Font = Enum.Font.GothamMedium
+    lbl.TextSize = 12
+    lbl.TextColor3 = Color3.fromRGB(180, 185, 200)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local box = Instance.new("TextBox", container)
+    box.Size = UDim2.new(0.4, 0, 0, 28)
+    box.Position = UDim2.new(0.6, 0, 0, 2)
+    box.BackgroundColor3 = Color3.fromRGB(24, 28, 42)
+    box.TextColor3 = Color3.fromRGB(0, 255, 200)
+    box.Text = tostring(defaultValue)
+    box.Font = Enum.Font.GothamBold
+    box.TextSize = 12
+
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+    local stroke = Instance.new("UIStroke", box)
+    stroke.Color = Color3.fromRGB(45, 50, 70)
+
+    box.Focused:Connect(function()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(0, 255, 200)}):Play()
+    end)
+    
+    box.FocusLost:Connect(function()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(45, 50, 70)}):Play()
+        local num = tonumber(box.Text)
+        if num then
+            onChanged(num)
+        else
+            box.Text = tostring(defaultValue)
+        end
+    end)
+end
+
+createInput(6, "🏃", "Tốc độ chạy:", 50, function(val) speedValue = val end)
+createInput(7, "⬆️", "Sức nhảy:", 50, function(val) jumpValue = val end)
+createInput(8, "✈️", "Tốc độ bay:", 50, function(val) flySpeed = val end)
+
+-- Footer / Nút Đóng
+local Footer = Instance.new("Frame", MainFrame)
+Footer.Size = UDim2.new(1, 0, 0, 40)
+Footer.Position = UDim2.new(0, 0, 1, -40)
+Footer.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+
+local CloseBtn = Instance.new("TextButton", Footer)
+CloseBtn.Size = UDim2.new(0.9, 0, 0, 28)
+CloseBtn.Position = UDim2.new(0.05, 0, 0.5, -14)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 60)
+CloseBtn.Text = "🔒 Thu Nhỏ Menu"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 12
+
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+
+local function toggleMenu(visible)
+    menuVisible = visible
+    if visible then
+        MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 310, 0, 430),
+            Position = UDim2.new(0.5, -155, 0.5, -215)
+        }):Play()
+    else
+        local tween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0.5, 0)
+        })
+        tween:Play()
+        tween.Completed:Connect(function()
+            MainFrame.Visible = false
+        end)
+    end
+end
+
+CloseBtn.MouseButton1Click:Connect(function() toggleMenu(false) end)
+OpenBtn.MouseButton1Click:Connect(function() toggleMenu(not MainFrame.Visible) end)
+
+-- Bật tắt menu bằng F5
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.F5 then
+        toggleMenu(not menuVisible)
+    end
+end)
+
+-- Hiệu ứng LED RGB
+RunService.RenderStepped:Connect(function()
+    local hue = (tick() % 5) / 5
+    local rgbColor = Color3.fromHSV(hue, 0.8, 1)
+    openStroke.Color = rgbColor
+    UIGradient.Rotation = (tick() * 60) % 360
+end)
+
+-- ===== LOGIC TÍNH NĂNG =====
+
+-- Tăng tốc và noclip
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    
+    if isApplied then
+        hum.WalkSpeed = speedValue
+        hum.UseJumpPower = true
+        hum.JumpPower = jumpValue
+    end
+    
+    if isNoclip then
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- ===== ESP SYSTEM (ĐƯỜNG THẲNG ĐỎ NHỎ) =====
+local function clearESP()
+    -- Xóa highlights
+    for player, hl in pairs(espHighlights) do
+        if hl and hl.Parent then
+            pcall(function() hl:Destroy() end)
+        end
+    end
+    espHighlights = {}
+    
+    -- Xóa lines
+    for _, obj in pairs(espLines) do
+        if obj and obj.Parent then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    espLines = {}
+    
+    -- Xóa dots
+    for _, obj in pairs(espDots) do
+        if obj and obj.Parent then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    espDots = {}
+end
+
+local function updateESP()
+    -- Xóa ESP cũ nếu tắt
+    if not isESP then
+        clearESP()
+        return
+    end
+    
+    local camera = Workspace.CurrentCamera
+    if not camera then return end
+    
+    local currentPlayers = {}
+    local myChar = LocalPlayer.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    
+    if not myHrp then return end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local char = player.Character
+            if char and char:FindFirstChild("Humanoid") and char:FindFirstChild("Humanoid").Health > 0 then
+                currentPlayers[player] = true
+                
+                -- Highlight nhân vật
+                local existingHL = espHighlights[player]
+                if not existingHL or not existingHL.Parent then
+                    if existingHL then
+                        pcall(function() existingHL:Destroy() end)
+                    end
+                    
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "ESP_Highlight"
+                    hl.FillColor = Color3.fromRGB(255, 40, 80)
+                    hl.OutlineColor = Color3.fromRGB(0, 255, 200)
+                    hl.FillTransparency = 0.3
+                    hl.OutlineTransparency = 0.1
+                    hl.Adornee = char
+                    hl.Parent = char
+                    espHighlights[player] = hl
+                end
+                
+                -- Vẽ đường thẳng từ player đến địch
+                local rootPart = char:FindFirstChild("HumanoidRootPart")
+                if rootPart then
+                    -- Xóa line cũ
+                    if espLines[player] then
+                        pcall(function() 
+                            if espLines[player] and espLines[player]:IsA("BasePart") then
+                                espLines[player]:Destroy()
+                            end
+                        end)
+                        espLines[player] = nil
+                    end
+                    
+                    -- Xóa dot cũ
+                    if espDots[player] then
+                        pcall(function() 
+                            if espDots[player] and espDots[player]:IsA("BasePart") then
+                                espDots[player]:Destroy()
+                            end
+                        end)
+                        espDots[player] = nil
+                    end
+                    
+                    local startPos = myHrp.Position
+                    local endPos = rootPart.Position
+                    local direction = (endPos - startPos)
+                    local distance = direction.Magnitude
+                    
+                    -- Vẽ đường thẳng từ tôi đến địch (MÀU ĐỎ, NHỎ)
+                    if distance > 0.5 then
+                        local midPoint = (startPos + endPos) / 2
+                        
+                        -- Tạo line nhỏ màu đỏ
+                        local line = Instance.new("Part")
+                        line.Name = "ESP_Line"
+                        line.Anchored = true
+                        line.CanCollide = false
+                        line.Transparency = 0.2
+                        line.Material = Enum.Material.Neon
+                        line.Color = Color3.fromRGB(255, 0, 0) -- MÀU ĐỎ
+                        
+                        -- Đường kẻ nhỏ
+                        local lineThickness = 0.05 -- Rất nhỏ
+                        line.Size = Vector3.new(lineThickness, lineThickness, distance)
+                        
+                        -- Định hướng chính xác
+                        local lookAtCFrame = CFrame.lookAt(startPos, endPos)
+                        line.CFrame = lookAtCFrame * CFrame.new(0, 0, -distance/2)
+                        line.Parent = camera
+                        espLines[player] = line
+                    end
+                    
+                    -- Vẽ dấu chấm tại vị trí địch (màu đỏ)
+                    local dot = Instance.new("Part")
+                    dot.Name = "ESP_Dot"
+                    dot.Anchored = true
+                    dot.CanCollide = false
+                    dot.Transparency = 0.1
+                    dot.Material = Enum.Material.Neon
+                    dot.Color = Color3.fromRGB(255, 0, 0) -- MÀU ĐỎ
+                    dot.Size = Vector3.new(1, 1, 1)
+                    dot.CFrame = CFrame.new(endPos)
+                    dot.Parent = camera
+                    espDots[player] = dot
+                end
+            else
+                -- Xóa ESP nếu không có nhân vật
+                if espHighlights[player] then
+                    pcall(function() espHighlights[player]:Destroy() end)
+                    espHighlights[player] = nil
+                end
+                if espLines[player] then
+                    pcall(function() 
+                        if espLines[player] and espLines[player]:IsA("BasePart") then
+                            espLines[player]:Destroy()
+                        end
+                    end)
+                    espLines[player] = nil
+                end
+                if espDots[player] then
+                    pcall(function() 
+                        if espDots[player] and espDots[player]:IsA("BasePart") then
+                            espDots[player]:Destroy()
+                        end
+                    end)
+                    espDots[player] = nil
+                end
+            end
+        end
+    end
+    
+    -- Xóa ESP cho player đã rời game
+    for player, _ in pairs(espHighlights) do
+        if not currentPlayers[player] then
+            if espHighlights[player] then
+                pcall(function() espHighlights[player]:Destroy() end)
+                espHighlights[player] = nil
+            end
+            if espLines[player] then
+                pcall(function() 
+                    if espLines[player] and espLines[player]:IsA("BasePart") then
+                        espLines[player]:Destroy()
+                    end
+                end)
+                espLines[player] = nil
+            end
+            if espDots[player] then
+                pcall(function() 
+                    if espDots[player] and espDots[player]:IsA("BasePart") then
+                        espDots[player]:Destroy()
+                    end
+                end)
+                espDots[player] = nil
+            end
+        end
+    end
+end
+
+-- Xử lý sự kiện player
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        task.wait(0.2)
+        updateESP()
+    end)
+    task.wait(0.2)
+    updateESP()
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if espHighlights[player] then
+        pcall(function() espHighlights[player]:Destroy() end)
+        espHighlights[player] = nil
+    end
+    if espLines[player] then
+        pcall(function() 
+            if espLines[player] and espLines[player]:IsA("BasePart") then
+                espLines[player]:Destroy()
+            end
+        end)
+        espLines[player] = nil
+    end
+    if espDots[player] then
+        pcall(function() 
+            if espDots[player] and espDots[player]:IsA("BasePart") then
+                espDots[player]:Destroy()
+            end
+        end)
+        espDots[player] = nil
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(0.2)
+    updateESP()
+end)
+
+-- Cập nhật ESP mỗi frame
+RunService.RenderStepped:Connect(updateESP)
+
+-- ===== FLY SYSTEM =====
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+    if isFlying and hrp then
+        local cam = workspace.CurrentCamera
+        if not flyBV or flyBV.Parent ~= hrp then
+            flyBV = Instance.new("BodyVelocity", hrp)
+            flyBV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        end
+        if not flyBG or flyBG.Parent ~= hrp then
+            flyBG = Instance.new("BodyGyro", hrp)
+            flyBG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+            flyBG.P = 9e4
+        end
+
+        flyBG.CFrame = cam.CFrame
+        local moveDir = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.E) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Q) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+
+        flyBV.Velocity = (moveDir.Magnitude > 0) and (moveDir.Unit * flySpeed) or Vector3.new(0, 0.1, 0)
+    else
+        if flyBV then flyBV:Destroy() flyBV = nil end
+        if flyBG then flyBG:Destroy() flyBG = nil end
+    end
+end)
+
+-- ===== AIMBOT SYSTEM (CHỈ AIM KHI NHẤN CHUỘT) =====
+local function isEnemy(player)
+    if player == LocalPlayer then return false end
+    
+    if not player.Character then return false end
+    local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return false end
+    if humanoid.Health <= 0 then return false end
+    
+    local myTeam = LocalPlayer.Team
+    local targetTeam = player.Team
+    if myTeam and targetTeam and myTeam ~= targetTeam then return true end
+    if not myTeam or not targetTeam then return true end
+    return false
+end
+
+local function getClosestEnemy()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local closest = nil
+    local minDist = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if isEnemy(player) then
+            local targetHrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if targetHrp and targetHrp.Parent then
+                local dist = (targetHrp.Position - hrp.Position).Magnitude
+                if dist < minDist then
+                    minDist = dist
+                    closest = player
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function getTargetPosition(player)
+    if not player or not player.Character then return nil end
+    
+    local head = player.Character:FindFirstChild("Head")
+    if head then
+        return head.Position
+    end
+    
+    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        return hrp.Position
+    end
+    
+    return nil
+end
+
+-- Hàm aim vào kẻ địch
+local function aimAtEnemy()
+    if not isAimbot then return end
+    
+    local target = getClosestEnemy()
+    if not target then return end
+    
+    local targetPos = getTargetPosition(target)
+    if not targetPos then return end
+    
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    
+    -- Aim camera vào mục tiêu
+    cam.CFrame = CFrame.lookAt(cam.CFrame.Position, targetPos)
+end
+
+-- CHỈ AIM KHI NHẤN CHUỘT TRÁI
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if isAimbot then
+            isAiming = true
+            aimAtEnemy()
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isAiming = false
+    end
+end)
+
+-- Aim liên tục khi đang giữ chuột
+RunService.RenderStepped:Connect(function()
+    if isAimbot and isAiming then
+        aimAtEnemy()
+    end
+end)
+
+-- ===== FPS COUNTER =====
+local fc, lu = 0, tick()
+RunService.RenderStepped:Connect(function()
+    fc = fc + 1
+    local now = tick()
+    if now - lu >= 0.5 then
+        FPS.Text = math.round(fc / (now - lu)) .. " FPS"
+        fc = 0
+        lu = now
+    end
+end)
+
+print("=== NhatPhi Admin Menu v8 Loaded Successfully! (RED LINES) ===")
+print("=== Press F5 to toggle menu ===")
+print("=== ESP: Đường thẳng màu đỏ, nhỏ từ bạn đến địch ===")
+print("=== Aimbot: Chỉ aim khi nhấn giữ chuột trái ===")

@@ -9,4 +9,5 @@ return {
     ["NPHI-VIP-108"] = true,
     ["NPHI-VIP-109"] = true,
     ["NPHI-VIP-110"] = true,
+    ["692010"] = true,
 }
